@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="utf-8">
+    <title>Verificar Certificado</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="img/tecnoeduca.png">
+
+    <!-- Estilos del template -->
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/style.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/personal.css">
+
+    <style>
+        .resultado-card {
+            border-radius: 15px;
+        }
+        .cert-img {
+            max-width: 100%;
+            border-radius: 10px;
+            border: 2px solid #eee;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- NAVBAR -->
+    <nav class="navbar navbar-expand-lg bg-dark navbar-dark shadow sticky-top p-1">
+        <a href="index.html" class="navbar-brand d-flex align-items-center px-4 px-lg-5">
+            <img class="logo" src="img/tecnoeduca.png" alt="">
+            <h5 class="m-2 alinear text-light"> 
+                <span class="title text-primary">Centro de Capacitaciones</span><br> TECNO-EDUCA 
+            </h5>
+        </a>
+        <button type="button" class="navbar-toggler me-2" data-bs-toggle="collapse" data-bs-target="#navbarCollapse">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+    </nav>
+
+    <div class="container my-5">
+
+        <h1 class="text-center text-primary mb-4">Verificación de Certificado</h1>
+
+        <!-- RESULTADO -->
+        <div id="resultado"></div>
+
+    </div>
+
+    <!-- FOOTER -->
+    <div class="container-fluid bg-dark text-light footer pt-5 mt-5">
+        <div class="container">
+            <p class="text-center">&copy; Tecno-Educa - Todos los derechos reservados.</p>
+        </div>
+    </div>
+
+    <!-- Script -->
+    <script>
+        async function verificar() {
+            const params = new URLSearchParams(window.location.search);
+            const codigo = params.get("codigo");
+
+            const contenedor = document.getElementById("resultado");
+
+            if (!codigo) {
+                contenedor.innerHTML = `
+                    <div class="alert alert-danger text-center">
+                        ⚠️ No se encontró ningún código para verificar.
+                    </div>`;
+                return;
+            }
+
+            try {
+                const resp = await fetch("certificados.json");
+                const certificados = await resp.json();
+
+                const encontrado = certificados.find(c => c.codigo === codigo);
+
+                if (!encontrado) {
+                    contenedor.innerHTML = `
+                        <div class="alert alert-danger text-center">
+                            ❌ El certificado con código <strong>${codigo}</strong> no existe o no ha sido registrado.
+                        </div>`;
+                    return;
+                }
+
+                // Mostrar certificado válido
+                contenedor.innerHTML = `
+                    <div class="card shadow p-4 resultado-card">
+                        <h3 class="text-success text-center">✔ Certificado Válido</h3>
+                        <hr>
+                        <p><strong>Código:</strong> ${encontrado.codigo}</p>
+                        <p><strong>Alumno:</strong> ${encontrado.alumno}</p>
+                        <p><strong>Curso:</strong> ${encontrado.curso}</p>
+                        <p><strong>Fecha:</strong> ${encontrado.fecha}</p>
+
+                        <h5 class="mt-4">Imagen del Certificado:</h5>
+                        <img src="${encontrado.imagen}" class="cert-img">
+                    </div>
+                `;
+
+            } catch (e) {
+                contenedor.innerHTML = `
+                    <div class="alert alert-danger text-center">
+                        Error cargando la base de datos de certificados.
+                    </div>`;
+            }
+        }
+
+        verificar();
+    </script>
+
+    <!-- JS -->
+    <script src="js/main.js"></script>
+</body>
+
+</html>

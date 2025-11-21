@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="utf-8">
+    <title>Generar Certificado - Admin</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Bootstrap -->
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- QR Generator -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+
+    <style>
+        body { padding: 30px; background: #f7f7f7; }
+        .card { border-radius: 15px; }
+        textarea { font-family: monospace; }
+        .img-200 { max-width: 200px; border-radius: 10px; border: 2px solid #eee; }
+        .qr-container {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.qr-img {
+    width: 150px;      /* tamaño visual pequeño */
+    height: auto;
+    padding: 10px;     /* borde interno */
+    background: white; /* fondo blanco para buena lectura */
+    border-radius: 10px;
+    display: inline-block;
+}
+.m-cent{
+    margin-left: auto;
+    margin-right: auto;
+}
+
+    </style>
+</head>
+
+<body>
+
+
+<!-- === PROTECCIÓN POR CONTRASEÑA (JS) === -->
+<div id="lock-screen" style="
+    position: fixed;
+    inset: 0;
+    background: #f7f7f7;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    font-family: Arial;
+    z-index: 9999;
+">
+    <h2>Acceso restringido</h2>
+    <p>Ingrese la contraseña para continuar</p>
+    
+    <input type="password" id="pass-input" placeholder="Contraseña"
+        style="padding: 10px; font-size: 16px; width: 250px; margin-top: 10px;">
+    
+    <button onclick="checkPass()" 
+        style="margin-top: 10px; padding: 10px 20px; cursor: pointer;">
+        Entrar
+    </button>
+
+    <p id="error-msg" style="color:red; margin-top:10px; display:none;">
+        Contraseña incorrecta
+    </p>
+</div>
+
+<script>
+    // Cambia esta contraseña si deseas otra
+    const PASSWORD = "TECNO2025";
+
+    function checkPass() {
+        const input = document.getElementById("pass-input").value;
+
+        if (input === PASSWORD) {
+            document.getElementById("lock-screen").style.display = "none";
+        } else {
+            document.getElementById("error-msg").style.display = "block";
+        }
+    }
+</script>
+<!-- === FIN PROTECCIÓN === -->
+
+
+
+
+
+
+    <div class="container">
+        <h1 class="text-center text-primary mb-4">Generador de Certificados</h1>
+
+        <div class="card shadow p-4">
+
+            <div class="row g-3">
+
+                <div class="col-md-6">
+                    <label>Nombre del Alumno:</label>
+                    <input id="alumno" class="form-control" type="text" required>
+                </div>
+
+                <div class="col-md-6">
+                    <label>Nombre del Curso:</label>
+                    <input id="curso" class="form-control" type="text" required>
+                </div>
+
+                <div class="col-md-4">
+                    <label>Prefijo del Curso (ej. OFIM):</label>
+                    <input id="prefijo" class="form-control" type="text" placeholder="OFIM" required>
+                </div>
+
+                <div class="col-md-4">
+                    <label>Número correlativo:</label>
+                    <input id="correlativo" class="form-control" type="number" placeholder="125" required>
+                </div>
+
+                <div class="col-md-4">
+                    <label>Fecha de emisión:</label>
+                    <input id="fecha" class="form-control" type="date" required>
+                </div>
+
+                <div class="col-md-12">
+                    <label>Subir imagen del certificado (PNG):</label>
+                    <input id="imagen" class="form-control" type="file" accept="image/png" required>
+                </div>
+
+                <div class="col-md-12 text-center mt-4">
+                    <button class="btn btn-primary btn-lg" onclick="generar()">Generar Certificado</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="resultado" class="mt-5"></div>
+    </div>
+
+
+    <script>
+        function generar() {
+            const alumno = document.getElementById("alumno").value;
+            const curso = document.getElementById("curso").value;
+            const prefijo = document.getElementById("prefijo").value.toUpperCase();
+            const correlativo = document.getElementById("correlativo").value;
+            const fecha = document.getElementById("fecha").value;
+            const imagenFile = document.getElementById("imagen").files[0];
+
+            if (!alumno || !curso || !prefijo || !correlativo || !fecha || !imagenFile) {
+                alert("Completa todos los campos");
+                return;
+            }
+
+            // Generar código
+            const codigo = `${prefijo}-${String(correlativo).padStart(5, "0")}`;
+
+            // Ruta donde se debe guardar la imagen
+            const rutaImagen = `certificados/${codigo}.png`;
+
+            // Generar QR
+            const url = `${window.location.origin}/verificar-certificado.html?codigo=${codigo}`;
+
+            let qr = new QRious({
+                value: url,
+                size: 500
+            });
+
+            // Crear bloque JSON
+            const json = `
+{
+    "codigo": "${codigo}",
+    "alumno": "${alumno}",
+    "curso": "${curso}",
+    "fecha": "${fecha}",
+    "imagen": "${rutaImagen}"
+}`;
+
+            // Mostrar resultado
+            document.getElementById("resultado").innerHTML = `
+                <div class="card p-4 shadow">
+                    <h3 class="text-center text-success">Certificado Generado</h3>
+                    <p><strong>Código:</strong> ${codigo}</p>
+
+                    <h5>⚠️ Debes hacer 2 cosas:</h5>
+                    <ol>
+                        <li><strong>Guardar la imagen</strong> como:<br> <code>${rutaImagen}</code> dentro de la carpeta <b>/certificados/</b></li>
+                        <li><strong>Pegar este bloque JSON</strong> en <b>certificados.json</b>:</li>
+                    </ol>
+
+                    <textarea class="form-control" rows="8">${json}</textarea>
+
+                    <hr>
+
+                    <h5>QR generado:</h5>
+                    <img src="${qr.toDataURL()}" class="img-200 qr-img m-cent"/>
+                </div>
+            `;
+        }
+    </script>
+
+</body>
+</html>
